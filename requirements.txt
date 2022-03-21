@@ -1,0 +1,10 @@
+PyQt5~=5.15.1
+pyserial~=3.4
+pyqtgraph~=0.11.0
+matplotlib~=3.3.2
+Pillow~=7.2.0
+Faker~=4.17.1
+mysqlclient~=2.0.1
+numpy~=1.19.2
+future~=0.18.2
+uncompyle6~=3.8.0
