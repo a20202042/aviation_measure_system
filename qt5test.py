@@ -371,7 +371,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.row != self.ui.tableWidget_measure.currentRow() or self.row is None:
                     self.number = 0
                 elif self.column != self.ui.tableWidget_measure.currentColumn() or self.column is None:
-                        self.number = 0
+                    self.number = 0
                 self.row = self.ui.tableWidget_measure.currentRow()
                 self.column = self.ui.tableWidget_measure.currentColumn()
                 self.ui.tableWidget_measure.setItem(self.row + self.number, self.column,
@@ -554,38 +554,38 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.row = int(self.row) + 1
                     self.change = False
                 elif list(self.measure_number_list[(self.row - 7)])[(-1)] == self.measure_item_data[0][(-2)] and \
-                        self.measure_item_data[(-1)][0] == self.ui.tableWidget_measure.item(0,self.column).text():
+                        self.measure_item_data[(-1)][0] == self.ui.tableWidget_measure.item(0, self.column).text():
+                    data = []
+                    self.measure_ok_part = []
+                    now_measure_part = list(self.measure_number_list[int(self.row - 7)])[0]
+                    print(now_measure_part)
+                    for number in range(1, int(self.part_number) + 1):
+                        number_is_insert = False
+                        for value in self.measure_value_data:
+                            if list(value[7])[0] == str(number):
+                                data.append(value)
+
+                        one_part_measure_value_len = len(self.measure_item_data) * int(
+                            self.measure_item_data[0][5])
+                        if int(one_part_measure_value_len) == len(data):
+                            if now_measure_part == str(number):
+                                print('%s_measure_ok' % number)
+                                for item in gvar.appearance_affect_all_data:
+                                    if item['number'] == number:
+                                        number_is_insert = True
+
+                                if number_is_insert is True:
+                                    pass
+                                else:
+                                    self.measure_ok_part.append(number)
+                                    self.window = appearance_affect_image_insert(number)
+                                    self.window.show()
                         data = []
-                        self.measure_ok_part = []
-                        now_measure_part = list(self.measure_number_list[int(self.row - 7)])[0]
-                        print(now_measure_part)
-                        for number in range(1, int(self.part_number) + 1):
-                            number_is_insert = False
-                            for value in self.measure_value_data:
-                                if list(value[7])[0] == str(number):
-                                        data.append(value)
 
-                            one_part_measure_value_len = len(self.measure_item_data) * int(
-                                    self.measure_item_data[0][5])
-                            if int(one_part_measure_value_len) == len(data):
-                                if now_measure_part == str(number):
-                                    print('%s_measure_ok' % number)
-                                    for item in gvar.appearance_affect_all_data:
-                                        if item['number'] == number:
-                                            number_is_insert = True
-
-                                    if number_is_insert is True:
-                                        pass
-                                    else:
-                                        self.measure_ok_part.append(number)
-                                        self.window = appearance_affect_image_insert(number)
-                                        self.window.show()
-                            data = []
-
-                        self.row = int(self.row) + 1
-                        self.column = 0
-                        print('換零件')
-                        self.change = True
+                    self.row = int(self.row) + 1
+                    self.column = 0
+                    print('換零件')
+                    self.change = True
             print('all_data=%s' % self.measure_value_data)
             self.ui.tableWidget_measure.doubleClicked.connect(self.double_clicked)
             self.ui.tableWidget_measure.cellChanged.connect(self.value_insert)
@@ -823,8 +823,7 @@ class date_updata_window(QtWidgets.QWidget, data_check):
 
         self.insert_appearance_effect_table(gvar.appearance_affect_all_data)
 
-
-# ------------
+    # ------------
     def table_insert(self):
         self.row = self.ui.tableWidget_part.currentRow()
         self.column = self.ui.tableWidget_part.currentColumn()
@@ -840,9 +839,8 @@ class date_updata_window(QtWidgets.QWidget, data_check):
             # self.insert_appearance_effect_table(gvar.appearance_affect_all_data)
             for item in gvar.appearance_affect_all_data:
                 print(item['number'], item['remake'], item['file_name'])
-            # for item in gvar.appearance_affect_all_data:
-            #     print(item)
-
+        for item in gvar.appearance_affect_all_data:
+            print(item)
 
     # def double_clicked(self):
     #     self.row = self.ui.tableWidget_part.currentRow()
@@ -852,7 +850,7 @@ class date_updata_window(QtWidgets.QWidget, data_check):
     #         self.ui.tableWidget_part.setEditTriggers(QtWidgets.QTableWidget.DoubleClicked)
     #     else:
     #         self.ui.tableWidget_part.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-# -----------
+    # -----------
 
     def close(self):
         self.hide()
@@ -867,6 +865,9 @@ class date_updata_window(QtWidgets.QWidget, data_check):
         # print(self.filename)
 
     def insert_appearance_effect_table(self, all):
+        # -------------------斷開
+        self.ui.tableWidget_part.disconnect()
+        # -------------------
         self.ui.tableWidget_part.setRowCount(len(all))
         for i in range(0, len(all)):
             item = all[i]
@@ -884,6 +885,9 @@ class date_updata_window(QtWidgets.QWidget, data_check):
         self.ui.tableWidget_part.resizeColumnsToContents()
         self.ui.tableWidget_part.resizeRowsToContents()
         self.ui.tableWidget_part.setSelectionBehavior(self.ui.tableWidget_part.SelectRows)
+        # -------------------連接
+        self.ui.tableWidget_part.cellChanged.connect(self.table_insert)
+        # -------------------
 
     def appearance_effect_data_check(self, data):
         check = False
