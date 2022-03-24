@@ -1,11 +1,9 @@
-
 def measure_go_nogo_calculate(upper, lower, value):
     gonogo = bool
     print(float(value))
     print(float(upper))
     print(float(lower))
-    if float(value) <= float(upper):
-        if float(lower) <= float(value):
+    if float(value) <= float(upper) and float(lower) <= float(value):
             gonogo = True
     else:
         gonogo = False
@@ -18,8 +16,7 @@ def measure_Yield(upper, lower, values):
     all = []
     for value in values:
         value = float(value)
-        if value <= upper:
-            if lower <= value:
+        if value <= upper and lower <= value:
                 excellent.append(value)
         else:
             inferior.append(value)
