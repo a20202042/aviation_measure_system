@@ -1,12 +1,12 @@
 import PyQt5, PyQt5.QtWidgets, PyQt5.QtCore, qt5, PyQt5.sip
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtWidgets import QMessageBox, QAbstractItemView, QTableWidgetItem
+from PyQt5.QtWidgets import QMessageBox, QAbstractItemView, QTableWidgetItem, QFileDialog, QMenu, qApp
 from qt5 import Ui_MainWindow, Ui_Form, Ui_toolcheck, Ui_widget_projectcheck, Ui_check, data_check, \
     measure_show_project, Ui_Form_system_set, tool_create, appearance_affect
 import sys, re, time, serial.tools.list_ports, toolconnect, sql_connect, measure
 from PyQt5.QtCore import QThread, pyqtSignal
 import os, shutil, matplotlib, matplotlib.pyplot as plt, global_var as gvar, read_data_json as read_json
+from PIL import Image
 
 selected_com_port = ''
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -204,6 +204,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.row = self.ui.tableWidget_measure.currentRow()
         self.column = self.ui.tableWidget_measure.currentColumn()
 
+    def contextMenuEvent(self, event):
+        print('in_context')
+        cmenu = QMenu(self)
+
+        go_act = cmenu.addAction('GO')
+        nogo_act = cmenu.addAction('NOGO')
+        action = cmenu.exec_(self.mapToGlobal(event.pos()))
+        row = self.ui.tableWidget_measure.currentRow()
+        colunm = self.ui.tableWidget_measure.currentColumn()
+        if action == go_act:
+            print("go_insert")
+            print(self.ui.tableWidget_measure.currentRow(), self.ui.tableWidget_measure.currentColumn())
+            if self.ui.tableWidget_measure.currentRow() < 7:
+                pass
+            else:
+                self.ui.tableWidget_measure.setItem(row, colunm, QTableWidgetItem('GO'))
+        elif action == nogo_act:
+            print('nogo_insert')
+            self.ui.tableWidget_measure.setItem(row, colunm, QTableWidgetItem('NO_GO'))
+
     def value_insert(self):
         print('偷看')
         try:
@@ -213,12 +233,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.colunm = self.ui.tableWidget_measure.currentColumn()
             self.insert_value = self.ui.tableWidget_measure.item(self.row, self.colunm).text()
             try:
-                test = float(self.insert_value)
-                self.gonogo = measure.measure_go_nogo_calculate(
-                    float(self.ui.tableWidget_measure.item(1, self.column).text()),
-                    float(self.ui.tableWidget_measure.item(2, self.column).text()), float(self.insert_value))
-                self.ui.tableWidget_project_item.setItem(0, 0, QTableWidgetItem(
-                    str(self.ui.tableWidget_measure.item(0, self.column).text())))
+                if str(self.insert_value) == 'GO' or str(self.insert_value) == 'NO_GO':
+                    if str(self.insert_value) == 'GO':
+                        self.gonogo = True
+                    else:
+                        self.gonogo = False
+                else:
+                    test = float(self.insert_value)
+                    self.gonogo = measure.measure_go_nogo_calculate(
+                        float(self.ui.tableWidget_measure.item(1, self.column).text()),
+                        float(self.ui.tableWidget_measure.item(2, self.column).text()), float(self.insert_value))
+                    self.ui.tableWidget_project_item.setItem(0, 0, QTableWidgetItem(
+                        str(self.ui.tableWidget_measure.item(0, self.column).text())))
                 if self.gonogo == True:
                     self.ui.label_gonogo.setPixmap(QtGui.QPixmap(BASE_DIR + '\\GO.PNG'))
                     self.ui.tableWidget_project_item.setItem(0, 6, QTableWidgetItem('GO'))
@@ -235,6 +261,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
                     self.ui.tableWidget_project_item.setItem(0, 1, QTableWidgetItem(self.measure_time))
                 print(self.measure_number_list)
+
                 self.measure_value_new_data = [self.insert_value,
                                                self.ui.tableWidget_measure.item(4, self.column).text(),
                                                self.measure_time,
@@ -270,23 +297,47 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     if item[6] == self.ui.tableWidget_measure.item(0, self.column).text():
                         self.measure_yield.append(item[0])
 
-                value_excellent, value_inferior, all = measure.measure_Yield(
-                    float(self.ui.tableWidget_measure.item(1, self.column).text()),
-                    float(self.ui.tableWidget_measure.item(2, self.column).text()), self.measure_yield)
-                self.ui.tableWidget_project_item.setItem(0, 3, QTableWidgetItem(str(value_excellent)))
-                self.ui.tableWidget_project_item.setItem(0, 4, QTableWidgetItem(str(value_inferior)))
-                self.ui.tableWidget_project_item.setItem(0, 5, QTableWidgetItem(str(all)))
-                self.ui.tableWidget_project_item.setItem(0, 2, QTableWidgetItem(
-                    str(self.ui.tableWidget_measure.item(6, self.column).text())))
-                self.measure_yield.clear()
-                drawing_data = []
-                for item in self.measure_value_data:
-                    if item[6] == self.ui.tableWidget_measure.item(0, self.column).text():
-                        drawing_data.append(item)
+                if str(self.insert_value) == 'GO' or str(self.insert_value) == 'NO_GO':
+                    value_excellent, value_inferior, all = measure.go_nogo_measure_yield(
+                        self.measure_yield)
+                    self.ui.tableWidget_project_item.setItem(0, 3, QTableWidgetItem(str(value_excellent)))
+                    self.ui.tableWidget_project_item.setItem(0, 4, QTableWidgetItem(str(value_inferior)))
+                    self.ui.tableWidget_project_item.setItem(0, 5, QTableWidgetItem(str(all)))
+                    self.ui.tableWidget_project_item.setItem(0, 2, QTableWidgetItem(
+                        str(self.ui.tableWidget_measure.item(6, self.column).text())))
+                    self.measure_yield.clear()
+                    drawing_data = []
+                    for item in self.measure_value_data:
+                        if item[6] == self.ui.tableWidget_measure.item(0, self.column).text():
+                            data = item.copy()
+                            if item[0] == 'GO':
+                                data[0] = float(self.ui.tableWidget_measure.item(3, self.column).text())
+                            elif item[0] == 'NO_GO':
+                                data[0] = float(self.ui.tableWidget_measure.item(2, self.column).text()) - 1.0
+                            drawing_data.append(data)
 
-                drawing_upper = self.ui.tableWidget_measure.item(1, self.column).text()
-                drawing_lower = self.ui.tableWidget_measure.item(2, self.column).text()
-                self.drawing(drawing_data, drawing_upper, drawing_lower)
+                    drawing_upper = self.ui.tableWidget_measure.item(1, self.column).text()
+                    drawing_lower = self.ui.tableWidget_measure.item(2, self.column).text()
+                    self.drawing(drawing_data, drawing_upper, drawing_lower)
+
+                else:
+                    value_excellent, value_inferior, all = measure.measure_Yield(
+                        float(self.ui.tableWidget_measure.item(1, self.column).text()),
+                        float(self.ui.tableWidget_measure.item(2, self.column).text()), self.measure_yield)
+                    self.ui.tableWidget_project_item.setItem(0, 3, QTableWidgetItem(str(value_excellent)))
+                    self.ui.tableWidget_project_item.setItem(0, 4, QTableWidgetItem(str(value_inferior)))
+                    self.ui.tableWidget_project_item.setItem(0, 5, QTableWidgetItem(str(all)))
+                    self.ui.tableWidget_project_item.setItem(0, 2, QTableWidgetItem(
+                        str(self.ui.tableWidget_measure.item(6, self.column).text())))
+                    self.measure_yield.clear()
+                    drawing_data = []
+                    for item in self.measure_value_data:
+                        if item[6] == self.ui.tableWidget_measure.item(0, self.column).text():
+                            drawing_data.append(item)
+
+                    drawing_upper = self.ui.tableWidget_measure.item(1, self.column).text()
+                    drawing_lower = self.ui.tableWidget_measure.item(2, self.column).text()
+                    self.drawing(drawing_data, drawing_upper, drawing_lower)
             except:
                 self.dele_item_number = self.measure_number_list[(self.row - 7)]
                 self.dele_item_measure_item = self.measure_item_data[self.column][0]
@@ -619,15 +670,27 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 value_check = False
         except:
             value_check = False
+            try:
+                self.value = str(self.ui.tableWidget_measure.item(row, column).text())
+                if str(self.value) == 'GO' or str(self.value) == 'NG_GO':
+                    value_check = True
+            except:
+                pass
+            # if str(self.ui.tableWidget_measure.item(row, column).text()) == '':
 
         self.ui.label_item_image.setPixmap(QtGui.QPixmap(BASE_DIR + '\\measure_item_image\\%s\\%s.jpg' % (
             self.project_name, str(self.ui.tableWidget_measure.item(0, column).text().split(' - ')[0]))))
         self.ui.label_project_item_name.setText(
             '量測項目：%s' % str(self.ui.tableWidget_measure.item(0, column).text().split(' - ')[0]))
+        self.measure_yield.clear()
         for item in self.measure_value_data:
             if item[6] == self.ui.tableWidget_measure.item(0, column).text():
-                self.measure_yield.append(float(item[0]))
-
+                if str(item[0]) == 'GO':
+                    self.measure_yield.append(float(self.ui.tableWidget_measure.item(3, self.column).text()))
+                elif str(item[0]) == 'NO_GO':
+                    self.measure_yield.append(float(self.ui.tableWidget_measure.item(2, self.column).text()) - 0.1)
+                else:
+                    self.measure_yield.append(float(item[0]))
         print(self.measure_yield)
         value_excellent, value_inferior, all = measure.measure_Yield(
             float(self.ui.tableWidget_measure.item(1, self.column).text()),
@@ -637,9 +700,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.tableWidget_project_item.setItem(0, 4, QTableWidgetItem(str(value_inferior)))
         self.ui.tableWidget_project_item.setItem(0, 5, QTableWidgetItem(str(all)))
         if value_check is True:
-            self.gonogo = measure.measure_go_nogo_calculate(float(self.ui.tableWidget_measure.item(1, column).text()),
-                                                            float(self.ui.tableWidget_measure.item(2, column).text()),
-                                                            float(self.value))
+            if str(self.value) == 'GO':
+                self.gonogo = True
+            elif str(self.value) == 'NO_GO':
+                self.gonogo = False
+            else:
+                self.gonogo = measure.measure_go_nogo_calculate(
+                    float(self.ui.tableWidget_measure.item(1, column).text()),
+                    float(self.ui.tableWidget_measure.item(2, column).text()),
+                    float(self.value))
             if self.gonogo == True:
                 self.ui.label_gonogo.setPixmap(QtGui.QPixmap(BASE_DIR + '\\GO.PNG'))
                 self.ui.tableWidget_project_item.setItem(0, 6, QTableWidgetItem('GO'))
@@ -652,7 +721,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ui.tableWidget_measure.item(row, column).setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0)))
                 self.ui.tableWidget_measure.item(row, column).setTextAlignment(
                     QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        if value_check is True:
             self.ui.tableWidget_project_item.setItem(0, 0, QTableWidgetItem(
                 self.ui.tableWidget_measure.item(0, column).text()))
             for item in self.measure_value_data:
@@ -661,14 +729,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     print(item)
                     self.ui.tableWidget_project_item.setItem(0, 1, QTableWidgetItem(item[2]))
 
-            drawing_data = []
-            for item in self.measure_value_data:
-                if item[6] == self.ui.tableWidget_measure.item(0, column).text():
-                    drawing_data.append(item)
+            if str(self.value) == 'GO' or str(self.value) == 'NO_GO':
+                drawing_data = []
+                for item in self.measure_value_data:
+                    if item[6] == self.ui.tableWidget_measure.item(0, self.column).text():
+                        data = item.copy()
+                        if data[0] == 'GO':
+                            data[0] = float(self.ui.tableWidget_measure.item(3, self.column).text())
+                        elif data[0] == 'NO_GO':
+                            data[0] = float(self.ui.tableWidget_measure.item(2, self.column).text()) - 1.0
+                        drawing_data.append(data)
+            else:
+                drawing_data = []
+                for item in self.measure_value_data:
+                    if item[6] == self.ui.tableWidget_measure.item(0, column).text():
+                        drawing_data.append(item)
 
             drawing_upper = self.ui.tableWidget_measure.item(1, column).text()
             drawing_lower = self.ui.tableWidget_measure.item(2, column).text()
             self.drawing(drawing_data, drawing_upper, drawing_lower)
+
         self.ui.tableWidget_measure.doubleClicked.connect(self.double_clicked)
         self.ui.tableWidget_measure.cellChanged.connect(self.value_insert)
         self.ui.tableWidget_measure.itemSelectionChanged.connect(self.get_blank_form)
@@ -831,16 +911,18 @@ class date_updata_window(QtWidgets.QWidget, data_check):
             print("insert")
             text = self.ui.tableWidget_part.item(self.row, self.column).text()
             number = self.row
-            print(number)
             delet = gvar.appearance_affect_all_data[number]
-            data = {'number': delet['number'], 'remake': text, 'file_name': delet['file_name'], 'image_base64': delet['image_base64']}
-            gvar.appearance_affect_all_data.append(data)
+            data = {'number': delet['number'], 'remake': text, 'file_name': delet['file_name'],
+                    'image_base64': delet['image_base64']}
+
+            index = gvar.appearance_affect_all_data.index(delet)
             gvar.appearance_affect_all_data.remove(delet)
-            # self.insert_appearance_effect_table(gvar.appearance_affect_all_data)
+            gvar.appearance_affect_all_data.insert(int(index), data)
             for item in gvar.appearance_affect_all_data:
                 print(item['number'], item['remake'], item['file_name'])
+            self.insert_appearance_effect_table(gvar.appearance_affect_all_data)
         for item in gvar.appearance_affect_all_data:
-            print(item)
+            print(item['number'])
 
     # def double_clicked(self):
     #     self.row = self.ui.tableWidget_part.currentRow()
@@ -860,8 +942,11 @@ class date_updata_window(QtWidgets.QWidget, data_check):
         self.hide()
 
     def button_image(self):
-        self.filename, self.filetype = QFileDialog.getOpenFileName(self, 'Open file', './')
-        self.ui.label_image.setText(self.filename)
+        self.filename, self.filetype = QFileDialog.getOpenFileNames(self, 'Open file', './')
+        data = str()
+        for item in self.filename:
+            data = data + str(item) + '\n'
+        self.ui.label_image.setText(data)
         # print(self.filename)
 
     def insert_appearance_effect_table(self, all):
@@ -904,13 +989,29 @@ class date_updata_window(QtWidgets.QWidget, data_check):
         data = {}
         if self.filename is None or self.filename == '':
             self.reply = QMessageBox.question(self, '警示', '請輸入圖片路徑Q', QMessageBox.Yes)
-        elif self.image_to_base64_data(self.filename) is not None:
+        elif self.filename is not None:
             remake = self.ui.lineEdit_remake.text()
             number = self.ui.comboBox.currentText()
-            image_base64 = self.image_to_base64_data(self.filename)
-            data = {'number': number, 'remake': remake, 'file_name': self.filename, 'image_base64': image_base64}
-            gvar.appearance_affect_all_data.append(data)
-            self.insert_appearance_effect_table(gvar.appearance_affect_all_data)
+            for item in self.filename:
+
+                # ----
+                resize = True
+                W = 1
+                while resize is True:
+                    img = self.image_to_base64_data(item)
+                    print(len(img))
+                    if len(img) / W >= 1000000.0:
+                        W = W + 1
+                    elif len(img) / W < 1000000.0:
+                        resize = False
+                foo = Image.open(item)
+                foo = foo.resize((int(foo.size[0] / W), int(foo.size[1] / W)), Image.ANTIALIAS)
+                foo.save('test_0512.jpg')
+                image_base64 = self.image_to_base64_data('test_0512.jpg')
+                # ----
+                data = {'number': number, 'remake': remake, 'file_name': item, 'image_base64': image_base64}
+                gvar.appearance_affect_all_data.append(data)
+                self.insert_appearance_effect_table(gvar.appearance_affect_all_data)
 
     def button_delet_data_appearance_defect(self):
         self.row = self.ui.tableWidget_part.currentRow()

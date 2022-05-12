@@ -156,6 +156,7 @@ class sql_connect:
             self.cursor.execute(SQL)
             measure_work_order = list(self.cursor.fetchone())[0]
             print(value_data)
+            #str()
             data_list.append((
              value_data[(-1)], value_data[0], value_data[1], value_data[2], time_now, meaure_project_id,
              measure_tool_id,

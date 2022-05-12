@@ -4,7 +4,7 @@ def measure_go_nogo_calculate(upper, lower, value):
     print(float(upper))
     print(float(lower))
     if float(value) <= float(upper) and float(lower) <= float(value):
-            gonogo = True
+        gonogo = True
     else:
         gonogo = False
     return gonogo
@@ -17,14 +17,27 @@ def measure_Yield(upper, lower, values):
     for value in values:
         value = float(value)
         if value <= upper and lower <= value:
-                excellent.append(value)
+            excellent.append(value)
         else:
             inferior.append(value)
         all.append(value)
 
     return (
-     len(excellent), len(inferior), len(all))
+        len(excellent), len(inferior), len(all))
 
+
+def go_nogo_measure_yield(values):
+    excellent = []
+    inferior = []
+    all = []
+    for value in values:
+        if value == 'GO':
+            excellent.append(value)
+        elif value == 'NO_GO':
+            inferior.append(value)
+        all.append(value)
+    return (
+        len(excellent), len(inferior), len(all))
 
 def draw_measure(data):
     measure_data = []
