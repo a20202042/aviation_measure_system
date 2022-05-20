@@ -544,32 +544,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.measurer]
                 if len(self.measure_value_data) > 0:
                     self.delet_data = []
+                    self.measure_value_data_check = True
                     for item in self.measure_value_data:
                         if item[7] == self.measure_value_new_data[7] and item[6] == self.measure_value_new_data[6]:
                             self.delet_data = item[:]
                             self.measure_value_data_check = False
                         elif item[7] != self.measure_value_new_data[7] or item[6] != self.measure_value_new_data[6]:
-                            self.measure_value_data_check = True
-
+                            pass
+                            # self.measure_value_data_check = True
                     if self.measure_value_data_check is False:
                         dele_number = self.measure_value_data.index(self.delet_data)
                         self.measure_value_data.remove(self.delet_data)
                         self.measure_value_data.insert(dele_number, self.measure_value_new_data)
                         print('清除資料:%s' % self.delet_data)
-                    if self.delet_data != []:
-                        if self.measure_value_data_check == True:
-                            dele_number = self.measure_value_data.index(self.delet_data)
-                            self.measure_value_data.remove(self.delet_data)
-                            self.measure_value_data.insert(dele_number, self.measure_value_new_data)
-                            print('清除資料:%s' % self.delet_data)
-                    if self.measure_value_data_check is True:
+                    if self.delet_data != [] and self.measure_value_data_check == True:
+                        dele_number = self.measure_value_data.index(self.delet_data)
+                        self.measure_value_data.remove(self.delet_data)
+                        self.measure_value_data.insert(dele_number, self.measure_value_new_data)
+                        print('清除資料:%s' % self.delet_data)
+                    elif self.measure_value_data_check is True:
                         self.find_number_check = False
-                    if self.find_number_check is True:
-                        print('Ture')
-                    else:
-                        if self.find_number_check is False:
+                        if self.find_number_check is True:
+                            print('Ture')
+                        elif self.find_number_check is False:
                             self.measure_value_data.append(self.measure_value_new_data)
-                    print('新增資料:%s' % self.measure_value_new_data)
+                            print('新增資料:%s' % self.measure_value_new_data)
                 elif len(self.measure_value_data) == 0:
                     self.measure_value_data.append(self.measure_value_new_data)
                 for item in self.measure_value_data:
@@ -1106,7 +1105,8 @@ class project_check_window(QtWidgets.QWidget, Ui_widget_projectcheck):
             measure_item = self.sql.sql_all_image_item('%s' % name)
             os.makedirs(BASE_DIR + '\\measure_item_image\\%s' % name)
             for item in measure_item:
-                data = self.sql.sql_image_base64data(item)
+                sql_project_name_to_project_id = self.sql.sql_project_name_to_project_id(name)
+                data = self.sql.sql_image_base64data_project_id(sql_project_name_to_project_id, item)
                 sql_connect.save('measure_item_image/%s/%s' % (name, item), data, 'jpg')
                 print('load image ok')
 

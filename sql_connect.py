@@ -1,5 +1,5 @@
-
 import MySQLdb, base64, time, global_var as gvar
+
 
 class sql_connect:
 
@@ -10,15 +10,16 @@ class sql_connect:
         self.sql_charset = 'utf8'
         self.sql_password = 'rsa+0414018'
         self.all_name = [
-         'mysite_project', 'mysite_measure_items', 'mysite_measurement_work_order_create',
-         'mysite_measuring_tool']
+            'mysite_project', 'mysite_measure_items', 'mysite_measurement_work_order_create',
+            'mysite_measuring_tool']
         self.project_item = ['project_name', 'project_create_time', 'founder_name', 'remake']
         self.project_work_order = ['project_name', 'sor_no', 'part_no', 'number_of_part', 'materials',
-         'manufacturing_machine',
-         'batch_number', 'class', 'inspector', 'remake']
+                                   'manufacturing_machine',
+                                   'batch_number', 'class', 'inspector', 'remake']
         self.measur_tool = ['tool_name', 'tool_type', 'tool_precision', 'tool_test_date']
         self.measure_item = ['project_name', 'tool_name', 'measure_items', 'upper', 'lower', 'center', 'decimal_piaces']
-        self.conn = MySQLdb.connect(host=(self.sql_host), user=(self.sql_user), passwd=(self.sql_password), db=(self.sqldb), charset=(self.sql_charset))
+        self.conn = MySQLdb.connect(host=(self.sql_host), user=(self.sql_user), passwd=(self.sql_password),
+                                    db=(self.sqldb), charset=(self.sql_charset))
         self.cursor = self.conn.cursor()
 
     def sql_all_date(self, table_name):
@@ -76,13 +77,14 @@ class sql_connect:
     def sql_find_measure_item(self, project_name):
         SQL = "SELECT mysite_measure_items.measurement_items,mysite_measure_items.upper_limit, mysite_measure_items.lower_limit, mysite_measure_items.specification_center, mysite_measure_items.decimal_piaces, mysite_measure_items.measure_unit, mysite_measure_items.measure_points, mysite_measure_items.measure_number, mysite_measure_items.too_name_id  From  mysite_measure_items  WHERE mysite_measure_items.project_measure_id=(SELECT mysite_project.id FROM mysite_project WHERE mysite_project.project_name='%s')" % project_name
         self.measure_item = ['量測專案名稱', '量測項目名稱', '量測數值上限', '量測數值下限', '量測數值中心',
-         '量測小數點位數', '量測單位', '量測點數', '量測次數', '量具名稱']
+                             '量測小數點位數', '量測單位', '量測點數', '量測次數', '量具名稱']
         self.cursor.execute(SQL)
         data = self.cursor.fetchall()
         list_data = []
         for item in data:
             data = list(item)
-            SQL = 'SELECT mysite_measuring_tool.toolname From  mysite_measuring_tool WHERE mysite_measuring_tool.id = %s' % data[(-1)]
+            SQL = 'SELECT mysite_measuring_tool.toolname From  mysite_measuring_tool WHERE mysite_measuring_tool.id = %s' % \
+                  data[(-1)]
             self.cursor.execute(SQL)
             tool_name = self.cursor.fetchall()[0][0]
             data.pop(-1)
@@ -142,25 +144,40 @@ class sql_connect:
         data_list = []
         time_now = time.strftime('%Y-%m-%d  %H:%M:%S', time.localtime())
         for value_data in data:
-            SQL = "SELECT mysite_work_order_measure_items.id  From  mysite_work_order_measure_items  WHERE mysite_work_order_measure_items.measurement_items = '%s'" % value_data[(-4)]
-            self.cursor.execute(SQL)
-            mysite_work_order_measure_items_id = list(self.cursor.fetchone())[0]
-            print(mysite_work_order_measure_items_id)
+            # SQL = "SELECT mysite_work_order_measure_items.id  From  mysite_work_order_measure_items  WHERE mysite_work_order_measure_items.measurement_items = '%s'" % value_data[(-4)]
+            # self.cursor.execute(SQL)
+            # mysite_work_order_measure_items_id = list(self.cursor.fetchone())[0]
+            # print(mysite_work_order_measure_items_id)
             SQL = "SELECT mysite_measurement_work_order.project_measure_id   From  mysite_measurement_work_order  WHERE mysite_measurement_work_order.sor_no = '%s'" % gvar.work_order
             self.cursor.execute(SQL)
             meaure_project_id = list(self.cursor.fetchone())[0]
-            SQL = "SELECT mysite_measuring_tool.id   From  mysite_measuring_tool  WHERE mysite_measuring_tool.toolname = '%s'" % value_data[(-2)]
+            SQL = "SELECT mysite_measuring_tool.id   From  mysite_measuring_tool  WHERE mysite_measuring_tool.toolname = '%s'" % \
+                  value_data[(-2)]
             self.cursor.execute(SQL)
             measure_tool_id = list(self.cursor.fetchone())[0]
             SQL = "SELECT mysite_measurement_work_order.id   From  mysite_measurement_work_order  WHERE mysite_measurement_work_order.sor_no = '%s'" % gvar.work_order
             self.cursor.execute(SQL)
             measure_work_order = list(self.cursor.fetchone())[0]
             print(value_data)
-            #str()
+            # str()
+            # ---------
+            measure_item_data = []
+            SQL = "SELECT mysite_work_order_measure_items.id, mysite_work_order_measure_items.measurement_items   From  mysite_work_order_measure_items  WHERE mysite_work_order_measure_items.measurement_work_order_id = '%s'" % measure_work_order
+            self.cursor.execute(SQL)
+            data = self.cursor.fetchall()
+            for item in data:
+                measure_item_data.append([item[0], item[1]])
+            for item in measure_item_data:
+                if item[1] == value_data[(-4)]:
+                    # SQL = "SELECT mysite_work_order_measure_items.id From  mysite_measure_items WHERE mysite_measure_items.id ='%s'" % item[0]
+                    # self.cursor.execute(SQL)
+                    # data = self.cursor.fetchall()
+                    mysite_work_order_measure_items_id = item[0]
+            # ---------
             data_list.append((
-             value_data[(-1)], value_data[0], value_data[1], value_data[2], time_now, meaure_project_id,
-             measure_tool_id,
-             measure_work_order, mysite_work_order_measure_items_id, value_data[7]))
+                value_data[(-1)], value_data[0], value_data[1], value_data[2], time_now, meaure_project_id,
+                measure_tool_id,
+                measure_work_order, mysite_work_order_measure_items_id, value_data[7]))
 
         print(data_list)
         SQL = "INSERT INTO mysite_measure_values(measure_man,measure_value,measure_unit,measure_time, time_now,measure_project_id, measure_tool_id, measure_work_order_id, measure_work_order_measure_item_id,measure_number,remake ) VALUE(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,'')"
@@ -203,6 +220,28 @@ class sql_connect:
         data = data[0][0]
         return data
 
+    def sql_image_base64data_project_id(self, project_id, measure_item):
+        SQL = "SELECT mysite_measure_items.id ,mysite_measure_items.measurement_items From  mysite_measure_items WHERE mysite_measure_items.project_id ='%s'" % project_id
+        self.cursor.execute(SQL)
+        data = self.cursor.fetchall()
+        measure_item_data = []
+        for item in data:
+            measure_item_data.append([item[0], item[1]])
+        for item in measure_item_data:
+            if item[1] == measure_item:
+                SQL = "SELECT mysite_measure_items.image_base64_data From  mysite_measure_items WHERE mysite_measure_items.id ='%s'" % item[0]
+                self.cursor.execute(SQL)
+                data = self.cursor.fetchall()
+                data = data[0][0]
+        return data
+
+    def sql_project_name_to_project_id(self, project_name):
+        SQL = " SELECT mysite_project.id  From mysite_project WHERE mysite_project.project_name = '%s' " % project_name
+        self.cursor.execute(SQL)
+        data = self.cursor.fetchall()
+        data = data[0][0]
+        return data
+
     def sql_all_image_item(self, project_name):
         SQL = "SELECT mysite_measure_items.measurement_items  From  mysite_measure_items WHERE mysite_measure_items.project_id=(SELECT mysite_project.id FROM mysite_project WHERE mysite_project.project_name='%s')" % project_name
         self.cursor.execute(SQL)
@@ -211,7 +250,6 @@ class sql_connect:
         for item in data:
             d = item[0]
             new_data.append(d)
-
         print(new_data)
         return new_data
 
@@ -246,7 +284,7 @@ class sql_connect:
         for item in data:
             work_id = self.sql_work_order_id(work_order)
             SQL = "INSERT INTO mysite_work_order_appearance_defect(base64_image, part_number, remake, work_order_id)VALUES ('%s', '%s', '%s', %s)" % (
-             item['image_base64'], item['number'], item['remake'], work_id)
+                item['image_base64'], item['number'], item['remake'], work_id)
             self.cursor.execute(SQL)
             self.conn.commit()
 
